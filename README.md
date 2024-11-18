@@ -1,0 +1,3 @@
+# nvim confs
+
+very messy
