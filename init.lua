@@ -1,37 +1,61 @@
-vim.g.base46_cache = vim.fn.stdpath "data" .. "/base46/"
-vim.g.mapleader = " "
-
--- bootstrap lazy and all plugins
 local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
-
-if not vim.uv.fs_stat(lazypath) then
-  local repo = "https://github.com/folke/lazy.nvim.git"
-  vim.fn.system { "git", "clone", "--filter=blob:none", repo, "--branch=stable", lazypath }
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system {
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  }
 end
-
 vim.opt.rtp:prepend(lazypath)
+local opts = {}
 
-local lazy_config = require "configs.lazy"
+require "vim-options"
+require("lazy").setup "plugins"
 
--- load plugins
-require("lazy").setup({
-  {
-    "NvChad/NvChad",
-    lazy = false,
-    branch = "v2.5",
-    import = "nvchad.plugins",
+vim.diagnostic.config {
+  virtual_text = {
+    format = function(diagnostic)
+      local max_length = 100 -- Limit the message length
+      if #diagnostic.message > max_length then
+        return string.sub(diagnostic.message, 1, max_length) .. "..."
+      end
+      return diagnostic.message
+    end,
   },
+}
 
-  { import = "plugins" },
-}, lazy_config)
+vim.opt.nu = true
+vim.opt.relativenumber = true
 
--- load theme
-dofile(vim.g.base46_cache .. "defaults")
-dofile(vim.g.base46_cache .. "statusline")
+vim.opt.tabstop = 2
+vim.opt.softtabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.expandtab = true
 
-require "options"
-require "nvchad.autocmds"
+vim.opt.smartindent = true
 
-vim.schedule(function()
-  require "mappings"
-end)
+vim.opt.whichwrap:append "<>[]hl"
+
+vim.opt.wrap = false
+
+vim.opt.swapfile = false
+vim.opt.backup = false
+vim.opt.undofile = true
+
+vim.opt.hlsearch = false
+vim.opt.incsearch = true
+
+vim.opt.termguicolors = true
+
+vim.opt.signcolumn = "yes"
+vim.opt.isfname:append "@-@"
+
+vim.opt.updatetime = 50
+
+vim.api.nvim_set_keymap("n", "<M-h>", "<C-w>h", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<M-j>", "<C-w>j", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<M-k>", "<C-w>k", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<M-l>", "<C-w>l", { noremap = true, silent = true })
