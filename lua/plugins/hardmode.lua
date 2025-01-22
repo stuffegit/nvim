@@ -6,6 +6,6 @@ return {
     hint = false,
     notification = false,
     force_exit_insert_mode = false,
-    max_cout = 100,
+    max_count = 10,
   },
 }
