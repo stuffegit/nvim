@@ -3,10 +3,10 @@ return {
   branch = "v3.x",
   dependencies = {
     "nvim-lua/plenary.nvim",
-    "nvim-tree/nvim-web-devicons",
     "MunifTanjim/nui.nvim",
-    "3rd/image.nvim",
+    "nvim-tree/nvim-web-devicons",
   },
+  lazy = false,
   config = function()
     vim.keymap.set("n", "<C-n>", ":Neotree toggle<CR>", {})
   end,

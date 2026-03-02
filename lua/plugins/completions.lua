@@ -10,13 +10,6 @@ return {
     },
   },
   {
-    "paopaol/cmp-doxygen",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "nvim-treesitter/nvim-treesitter-textobjects",
-    },
-  },
-  {
     "hrsh7th/nvim-cmp",
     version = false,
     dependencies = {
@@ -49,7 +42,6 @@ return {
           { name = "path",     priority = 10 },
         }, {
           { name = "buffer",  priority = 20 },
-          { name = "doxygen", priority = 30 },
         }),
       }
     end,

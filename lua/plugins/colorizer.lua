@@ -1,5 +1,10 @@
 return {
-	"NvChad/nvim-colorizer.lua",
-	event = "BufReadPre",
-	opts = {},
+	"catgoose/nvim-colorizer.lua",
+  event = "BufReadPre",
+  opts = {},
+  config = function()
+    require("colorizer").setup({
+      options = { parsers = { css = true } },
+    })
+  end,
 }
