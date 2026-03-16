@@ -18,15 +18,15 @@ return {
 		config = function()
 			require("mason-lspconfig").setup({
 				ensure_installed = { "clangd" },
-				automatic_enable = false,
+				automatic_enable = true,
 			})
 		end,
 	},
 	{
 		"neovim/nvim-lspconfig",
 		config = function()
-			-- local capa = require("cmp_nvim_lsp").default_capabilities()
-			local capa = vim.lsp.protocol.make_client_capabilities()
+			local capa = require("cmp_nvim_lsp").default_capabilities()
+			-- local capa = vim.lsp.protocol.make_client_capabilities()
 			capa.offsetEncoding = { "utf-16" }
 
 			local util = require("lspconfig.util")
@@ -37,7 +37,7 @@ return {
 				end
 
 				return util.search_ancestors(abs, function(path)
-					if util.path.exists(util.path.join(path, "build/Debug/compile_commands.json")) then
+					if util.path.exists(util.path.join(path, "build/compile_commands.json")) then
 						return path
 					end
 					if util.path.exists(util.path.join(path, "compile_commands.json")) then
@@ -53,11 +53,10 @@ return {
 				capabilities = capa,
 				root_dir = clangd_root,
 				cmd = {
-					"/usr/bin/clangd",
+					"clangd",
 					"--background-index",
 					"--completion-style=detailed",
 					"--header-insertion=iwyu",
-					"--compile-commands-dir=build/Debug",
 					"--query-driver=/usr/bin/arm-none-eabi-*",
 				},
 			})
@@ -79,11 +78,10 @@ return {
 					vim.lsp.start({
 						name = "clangd",
 						cmd = {
-							"/usr/bin/clangd",
+							"clangd",
 							"--background-index",
 							"--completion-style=detailed",
 							"--header-insertion=iwyu",
-							"--compile-commands-dir=build/Debug",
 							"--query-driver=/usr/bin/arm-none-eabi-*",
 						},
 						capabilities = capa,

@@ -5,14 +5,17 @@ return {
     local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
     null_ls.setup({
-      sources = {
-        null_ls.builtins.formatting.stylua,
-        null_ls.builtins.formatting.isort,
+      temp_dir = "/tmp",
 
+      sources = {
         -- C / C++
         null_ls.builtins.diagnostics.cppcheck.with({
+          condition = function(utils)
+            return not utils.bufname:match("^/usr/include")
+          end,
           filetypes = { "c", "cpp" },
           extra_args = {
+            "--project=compile_commands.json",
             "--enable=warning,performance,portability",
             "--template=gcc",
             "--std=c++17",
@@ -36,7 +39,7 @@ return {
               vim.lsp.buf.format({
                 bufnr = bufnr,
                 filter = function(c)
-                  return c.name == "null-ls"
+                  return c.name == "null-ls" or c.name == "none-ls"
                 end,
               })
             end,
@@ -47,7 +50,7 @@ return {
           vim.lsp.buf.format({
             bufnr = bufnr,
             filter = function(c)
-              return c.name == "null-ls"
+              return c.name == "null-ls" or c.name == "none-ls"
             end,
           })
         end, { buffer = bufnr })
