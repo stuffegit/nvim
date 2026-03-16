@@ -1,67 +1,110 @@
+local map = vim.keymap.set
+
 return {
-  {
-    "mason-org/mason.nvim",
-    config = function()
-      require("mason").setup()
-    end,
-  },
-  {
-    "williamboman/mason-lspconfig.nvim",
-    dependencies = {"mason-org/mason.nvim"},
-    config = function()
-      require("mason-lspconfig").setup({
-        ensure_installed = { "pylsp", "lua_ls", "clangd" },
-      })
-    end,
-  },
-  {
-    "neovim/nvim-lspconfig",
-    config = function()
-      local map = vim.keymap.set
-      local lspconfig = require("lspconfig")
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+	{
+		"williamboman/mason.nvim",
+		opts = {
+			ensure_installed = {
+				"clangd",
+				"clang-format",
+			},
+		},
+		config = function()
+			require("mason").setup()
+		end,
+	},
+	{
+		"williamboman/mason-lspconfig.nvim",
+		config = function()
+			require("mason-lspconfig").setup({
+				ensure_installed = { "clangd" },
+				automatic_enable = false,
+			})
+		end,
+	},
+	{
+		"neovim/nvim-lspconfig",
+		config = function()
+			-- local capa = require("cmp_nvim_lsp").default_capabilities()
+			local capa = vim.lsp.protocol.make_client_capabilities()
+			capa.offsetEncoding = { "utf-16" }
 
-      local on_attach = function(_, bufnr)
-        local opts = { noremap = true, silent = true, buffer = bufnr }
-      map("n", "K", vim.lsp.buf.hover, opts)
-      map("n", "gd", vim.lsp.buf.definition, opts)
-      map("n", "gD", vim.lsp.buf.declaration, opts)
-      map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-    end
+			local util = require("lspconfig.util")
+			local function clangd_root(fname)
+				local abs = vim.fs.normalize(vim.fn.fnamemodify(fname, ":p"))
+				if abs == "" then
+					return nil
+				end
 
-      vim.lsp.config("pylsp", {
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      vim.lsp.enable("pylsp")
+				return util.search_ancestors(abs, function(path)
+					if util.path.exists(util.path.join(path, "build/Debug/compile_commands.json")) then
+						return path
+					end
+					if util.path.exists(util.path.join(path, "compile_commands.json")) then
+						return path
+					end
+					if util.path.exists(util.path.join(path, "CMakeLists.txt")) then
+						return path
+					end
+				end)
+			end
 
-      vim.lsp.config("clangd", {
-        capabilities = capabilities,
-        on_attach = on_attach,
-        cmd = {
-          "clangd",
-          "--clang-tidy",
-          "--completion-style=detailed",
-          "--header-insertion=iwyu",
-        },
-        root_dir = function(fname)
-          return lspconfig.util.find_git_ancestor(fname) or vim.fn.getcwd()
-        end,
-      })
-      vim.lsp.enable("clangd")
+			vim.lsp.config("clangd", {
+				capabilities = capa,
+				root_dir = clangd_root,
+				cmd = {
+					"/usr/bin/clangd",
+					"--background-index",
+					"--completion-style=detailed",
+					"--header-insertion=iwyu",
+					"--compile-commands-dir=build/Debug",
+					"--query-driver=/usr/bin/arm-none-eabi-*",
+				},
+			})
 
-      vim.lsp.config("lua_ls", {
-        capabilities = capabilities,
-        on_attach = on_attach,
-        settings = {
-          Lua = {
-            diagnostics = {
-              globals = {"vim"},
-            },
-          },
-        },
-      })
-      vim.lsp.enable("lua_ls")
-    end,
-  },
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = { "c", "cpp", "objc", "objcpp", "cuda" },
+				callback = function(args)
+					local bufnr = args.buf
+					if #vim.lsp.get_clients({ bufnr = bufnr, name = "clangd" }) > 0 then
+						return
+					end
+
+					local fname = vim.api.nvim_buf_get_name(bufnr)
+					local root = clangd_root(fname)
+					if not root then
+						return
+					end
+
+					vim.lsp.start({
+						name = "clangd",
+						cmd = {
+							"/usr/bin/clangd",
+							"--background-index",
+							"--completion-style=detailed",
+							"--header-insertion=iwyu",
+							"--compile-commands-dir=build/Debug",
+							"--query-driver=/usr/bin/arm-none-eabi-*",
+						},
+						capabilities = capa,
+						root_dir = root,
+					})
+				end,
+			})
+
+			vim.api.nvim_create_user_command("LspRestartClangd", function()
+				for _, client in ipairs(vim.lsp.get_clients({ name = "clangd" })) do
+					client:stop(true)
+				end
+				vim.defer_fn(function()
+					vim.cmd("edit")
+				end, 100)
+			end, { desc = "Restart clangd without touching null-ls" })
+
+			map("n", "K", vim.lsp.buf.hover, {})
+			map("n", "gd", vim.lsp.buf.definition, {})
+			map("n", "gD", vim.lsp.buf.declaration, {})
+			map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, {})
+		end,
+	},
 }
