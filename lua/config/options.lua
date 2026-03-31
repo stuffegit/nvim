@@ -33,3 +33,12 @@ vim.g.mapleader = " "
 
 vim.opt.modeline = false
 vim.opt.modelines = 0
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+	callback = function()
+		vim.api.nvim_set_hl(0, "NoiceCmdlineMinimal", {
+			fg = "#cdd6f4",
+			bg = "#313244",
+		})
+	end,
+})
